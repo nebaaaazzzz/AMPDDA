@@ -43,7 +43,7 @@ def train():
     fold = 0
     for (train_pos_idx, test_pos_idx), (train_neg_idx, test_neg_idx) in zip(kf.split(data_pos), kf.split(data_neg)):
         fold += 1
-        train_cv(args , fold ,data ,df, data_pos , data_neg , train_pos_idx , test_pos_idx ,train_neg_idx , test_neg_idx )
+        train_cv(args  ,fold,data ,df, data_pos , data_neg , train_pos_idx , test_pos_idx ,train_neg_idx , test_neg_idx )
         
     #------------testing--------------
     fold = 0
@@ -54,7 +54,6 @@ def train():
                                                                             kf.split(data_neg)):
         label = test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_idx  ,data_neg ,train_neg_idx ,test_neg_idx )
         fold += 1
-
 
     #---------save the result-------------
     AUC, aupr, acc, f1, pre, rec, spe = get_metrics(label.cpu().detach().numpy().flatten(), pred_result.flatten())

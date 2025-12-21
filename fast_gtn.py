@@ -132,7 +132,9 @@ class GCNConv(MessagePassing):
     def __repr__(self):
         return '{}({}, {})'.format(self.__class__.__name__, self.in_channels,
                                    self.out_channels)
-def generate_non_local_graph(args, feat_trans, H, ):
+
+
+def generate_non_local_graph(args, feat_trans, H, A, num_edge, num_nodes):
     K = args.K
     # if not args.knn:    
     # pdb.set_trace()
@@ -148,6 +150,18 @@ def generate_non_local_graph(args, feat_trans, H, ):
     edge_value = (D_topk_value).reshape(-1)
     edge_value = D_topk_value.reshape(-1)
     return [edge_index, edge_value]
+
+    # if len(A) < num_edge:
+
+    #     deg_inv_sqrt, deg_row, deg_col = _norm(edge_index, num_nodes, edge_value)
+    #     edge_value = deg_inv_sqrt[deg_col] * edge_value
+    #     g = (edge_index, edge_value)
+    #     A.append(g)
+    # else:
+    #     deg_inv_sqrt, deg_row, deg_col = _norm(edge_index, num_nodes, edge_value)
+    #     edge_value = deg_inv_sqrt[deg_col] * edge_value
+    #     g = (edge_index, edge_value)
+    #     A[-1] = g
 
 def _norm(edge_index, num_nodes, edge_weight=None, improved=False, dtype=None):
     if edge_weight is None:
@@ -165,8 +179,13 @@ def _norm(edge_index, num_nodes, edge_weight=None, improved=False, dtype=None):
 
 
 class FastGTNs(nn.Module):
-    def __init__(self, num_edge_type, w_in, num_class, num_nodes, args=None):
+    def __init__(self, num_edge_type, num_nodes, args=None):
         super(FastGTNs, self).__init__()
+        
+        
+        w_in = args.hidden_feats
+        num_class = args.hidden_feats #w_out
+        
         self.args = args
         self.num_nodes = num_nodes
         self.num_FastGTN_layers = args.num_FastGTN_layers
@@ -175,12 +194,15 @@ class FastGTNs(nn.Module):
             if i == 0:
                 fastGTNs.append(FastGTN(num_edge_type, w_in, num_class, num_nodes, args))
             else:
-                fastGTNs.append(FastGTN(num_edge_type, args.node_dim, num_class, num_nodes, args))
+                fastGTNs.append(FastGTN(num_edge_type, args.hidden_feats, num_class, num_nodes, args))
         self.fastGTNs = nn.ModuleList(fastGTNs)
     
     def add_argparse_args(parser) : 
-        parser.add_argument('--num_FastGTN_layers', type=int, default=1,
+        parser.add_argument('--num_layers', type=int, default=1,
                         help='Number of stacked FastGTN modules (for FastGTNs wrapper)')
+        parser.add_argument('--num_FastGTN_layers' ,type=int, default=1 ,help="")
+        parser.add_argument('--num_channels', type=int, default=1,
+                        help='Number of ')
         parser.add_argument('--non_local', action='store_true', default=False,
                             help='Enable non-local graph construction inside FastGTN')
         parser.add_argument('--non_local_weight', type=float, default=0.0,
@@ -214,7 +236,7 @@ class FastGTN(nn.Module):
         self.num_nodes = num_nodes
         self.w_in = w_in
         args.w_in = w_in
-        self.w_out = args.node_dim
+        self.w_out = args.hidden_feats
         self.num_class = num_class
         self.num_layers = args.num_layers
         
@@ -302,9 +324,6 @@ class FastGTLayer(nn.Module):
         else:
             self.conv1 = FastGTConv(in_channels, out_channels, num_nodes, args=args)
         self.args = args
-        self.feat_transfrom = nn.Sequential(nn.Linear(args.w_in, 128),
-                                        nn.ReLU(),
-                                        nn.Linear(128, 64))
     def forward(self, H_, A, num_nodes, epoch=None, layer=None):
         result_A, W1 = self.conv1(A, num_nodes, epoch=epoch, layer=layer)
         W = [W1]

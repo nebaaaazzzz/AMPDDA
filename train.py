@@ -5,18 +5,13 @@ import torch as th
 import numpy as np
 from model import Model
 device = "cuda" if th.cuda.is_available() else "cpu"
-def train_model(args , g , feature , metapath , train_pos_idx , train_neg_idx , mask_train, label ) :
+def train_model(args , g , feature  , train_pos_idx , train_neg_idx , mask_train, label ) :
      # load model and optimizer
-    # if using in-model GTN embeddings, skip external metapath2vec
-    drug_emb, disease_emb = None, None
-    
     num_nodes = sum([g.num_nodes(nt) for nt in g.ntypes])
     model = Model(etypes=g.etypes, ntypes=g.ntypes,
                     in_feats=feature['drug'].shape[1],
-                    hidden_feats=args.hidden_feats,
-                    num_heads=args.num_heads,
-                    dropout=args.dropout,
                     num_nodes=num_nodes,
+                    args=args
                     )
     model.to(device)
 
@@ -56,7 +51,6 @@ def train_model(args , g , feature , metapath , train_pos_idx , train_neg_idx , 
         if early_stop:
             break
 def train_cv(args , fold ,data ,df, data_pos , data_neg , train_pos_idx , test_pos_idx ,train_neg_idx , test_neg_idx ) :
-          
     print('{}-Cross Validation: Fold {}'.format(args.nfold, fold))
 
     # get the index list for train and test set
@@ -78,16 +72,13 @@ def train_cv(args , fold ,data ,df, data_pos , data_neg , train_pos_idx , test_p
                     'protein': g.nodes['protein'].data['h'],
                     'gene': g.nodes['gene'].data['h'],
                     'pathway': g.nodes['pathway'].data['h']}
-        metapath = ['disease_drug', 'drug_protein', 'protein_drug', 'drug_disease']
     elif args.dataset == 'Bdataset':
         feature = {'drug': g.nodes['drug'].data['h'],
                     'disease': g.nodes['disease'].data['h'],
                     'protein': g.nodes['protein'].data['h']}
-        metapath = ['drug_protein', 'protein_drug', 'drug_disease']
     else:
         feature = {'drug': g.nodes['drug'].data['h'],
                     'disease': g.nodes['disease'].data['h']}
-        metapath = ['drug_disease', 'disease_drug']
 
     # get the mask list for train and test set that used for performance calculation
     mask_label = np.ones(df.shape)
@@ -106,7 +97,7 @@ def train_cv(args , fold ,data ,df, data_pos , data_neg , train_pos_idx , test_p
                                                                                             len(test_neg_idx[0])))
     label = th.tensor(df).float().to(device)
     
-    train_model(args , g , feature , metapath , train_pos_idx , train_neg_idx , mask_train, label )
+    train_model(args , g , feature  , train_pos_idx , train_neg_idx , mask_train, label )
 
 
 def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_idx  ,data_neg ,train_neg_idx ,test_neg_idx ) :

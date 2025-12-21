@@ -80,9 +80,19 @@ class Graph_attention(nn.Module):
 class Model(nn.Module):
     """The overall MRDDA architecture."""
 
-    def __init__(self, etypes, ntypes, in_feats, hidden_feats, num_heads, dropout, num_nodes, use_gtn=False,
-                 gtn_channels=1, gtn_layers=1):
+    def __init__(self, etypes, ntypes, in_feats, num_nodes, args):
+        # gtn_channels=1, gtn_layers=1
+        #   hidden_feats=args.hidden_feats,
+        #             num_heads=args.num_heads,
+        #             dropout=args.dropout,
         super(Model, self).__init__()
+        
+        num_layers = args.num_layers
+        hidden_feats = args.hidden_feats
+        num_channels = args.num_channels
+        dropout = args.dropout
+        num_heads = args.num_heads
+        
         self.ntypes = ntypes
         if 'drug' in ntypes:
             self.drug_linear = nn.Linear(in_feats, hidden_feats)
@@ -110,36 +120,13 @@ class Model(nn.Module):
         # optional in-model GTN to learn node embeddings from graph structure
         self.hidden_feats = hidden_feats
         # Instantiate GTN/FastGTN immediately so state_dict works
-        self.gtn_C = min(gtn_channels, len(etypes)) if len(etypes) > 0 else gtn_channels
-        self.gtn_L = gtn_layers
+        self.gtn_L = num_layers
         
         self.gtn = None # Will be overwritten below
         num_edge = len(etypes)
-        num_channels = self.gtn_C
-        w_in = self.hidden_feats
-        w_out = self.hidden_feats
-        
-        class FastGTNArgs:
-            pass
-        fg_args = FastGTNArgs()
-        fg_args.num_channels = num_channels
-        fg_args.num_layers = self.gtn_L
-        fg_args.node_dim = w_out
-        fg_args.non_local = False
-        fg_args.beta = 0.5
-        fg_args.channel_agg = 'mean'
-        fg_args.remove_self_loops = False
-        fg_args.non_local_weight = 0
-        
-        fg_args.num_FastGTN_layers = 1
-        fg_args.dataset = 'None'
-        
         self.gtn = FastGTNs(num_edge_type=num_edge,
-                            w_in=w_in,
-                            num_class=w_out, 
                             num_nodes=num_nodes,
-                            args=fg_args)
-        self.gtn_proj = None # Not used/needed for FastGTN as it projects internally
+                            args=args)
 
     def gtn_embeddings(self , h , g) :
         
