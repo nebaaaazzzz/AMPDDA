@@ -89,7 +89,6 @@ class Model(nn.Module):
         
         num_layers = args.num_layers
         hidden_feats = args.hidden_feats
-        num_channels = args.num_channels
         dropout = args.dropout
         num_heads = args.num_heads
         

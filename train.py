@@ -102,8 +102,8 @@ def train_cv(args , fold ,data ,df, data_pos , data_neg , train_pos_idx , test_p
 
 def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_idx  ,data_neg ,train_neg_idx ,test_neg_idx ) :
       # get the index list for test set
-    train_pos_id, test_pos_id = data_pos[train_pos_idx], data_pos[test_pos_idx]
-    train_neg_id, test_neg_id = data_neg[train_neg_idx], data_neg[test_neg_idx]
+    _, test_pos_id = data_pos[train_pos_idx], data_pos[test_pos_idx]
+    _, test_neg_id = data_neg[train_neg_idx], data_neg[test_neg_idx]
     test_pos_idx = [tuple(test_pos_id[:, 0]), tuple(test_pos_id[:, 1])]
     test_neg_idx = [tuple(test_neg_id[:, 0]), tuple(test_neg_id[:, 1])]
 
@@ -115,16 +115,13 @@ def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_id
                     'protein': g.nodes['protein'].data['h'],
                     'gene': g.nodes['gene'].data['h'],
                     'pathway': g.nodes['pathway'].data['h']}
-        metapath = ['disease_drug', 'drug_protein', 'protein_drug', 'drug_disease']
     elif args.dataset == 'Bdataset':
         feature = {'drug': g.nodes['drug'].data['h'],
                     'disease': g.nodes['disease'].data['h'],
                     'protein': g.nodes['protein'].data['h']}
-        metapath = ['drug_protein', 'protein_drug', 'drug_disease']
     else:
         feature = {'drug': g.nodes['drug'].data['h'],
                     'disease': g.nodes['disease'].data['h']}
-        metapath = ['drug_disease', 'disease_drug']
 
     # get the mask list for test set that used for performance calculation
     mask_label = np.ones(df.shape)
@@ -136,7 +133,6 @@ def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_id
     assert len(mask_test[0]) == len(test_neg_idx[0]) + len(test_pos_idx[0])
     label = th.tensor(df).float().to(device)
 
-    drug_emb, disease_emb = None, None
     
     num_nodes = sum([g.num_nodes(nt) for nt in g.ntypes])
     model = Model(etypes=g.etypes, ntypes=g.ntypes,
