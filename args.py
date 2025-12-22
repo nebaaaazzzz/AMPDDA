@@ -15,7 +15,7 @@ def config_parser(parser) :
     # Training Arguments
     parser.add_argument('-fo', '--nfold', default=10, type=int,
                         help='The number of k in K-folds Validation')
-    parser.add_argument('-ep', '--epoch', default=1000, type=int,
+    parser.add_argument('-ep', '--epoch', default=3000, type=int,
                         help='Number of epochs for training')
     parser.add_argument('-lr', '--learning_rate', default=0.01, type=float,
                         help='learning rate to use')

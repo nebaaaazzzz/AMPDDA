@@ -151,18 +151,6 @@ def generate_non_local_graph(args, feat_trans, H, A, num_edge, num_nodes):
     edge_value = D_topk_value.reshape(-1)
     return [edge_index, edge_value]
 
-    # if len(A) < num_edge:
-
-    #     deg_inv_sqrt, deg_row, deg_col = _norm(edge_index, num_nodes, edge_value)
-    #     edge_value = deg_inv_sqrt[deg_col] * edge_value
-    #     g = (edge_index, edge_value)
-    #     A.append(g)
-    # else:
-    #     deg_inv_sqrt, deg_row, deg_col = _norm(edge_index, num_nodes, edge_value)
-    #     edge_value = deg_inv_sqrt[deg_col] * edge_value
-    #     g = (edge_index, edge_value)
-    #     A[-1] = g
-
 def _norm(edge_index, num_nodes, edge_weight=None, improved=False, dtype=None):
     if edge_weight is None:
         edge_weight = torch.ones((edge_index.size(1), ),
@@ -199,10 +187,10 @@ class FastGTNs(nn.Module):
     
     def add_argparse_args(parser) : 
         parser.add_argument('--num_layers', type=int, default=1,
-                        help='Number of stacked FastGTN modules (for FastGTNs wrapper)')
+                        help='')
         parser.add_argument('--num_FastGTN_layers' ,type=int, default=1 ,help="")
         parser.add_argument('--num_channels', type=int, default=1,
-                        help='Number of ')
+                        help='')
         parser.add_argument('--non_local', action='store_true', default=False,
                             help='Enable non-local graph construction inside FastGTN')
         parser.add_argument('--non_local_weight', type=float, default=0.0,

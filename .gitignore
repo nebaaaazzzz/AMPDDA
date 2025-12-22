@@ -1,4 +1,5 @@
-result/
+result/*
+!result/.gitkeep
 .venv
 __pycache__/
 *.pyc
@@ -6,3 +7,4 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+*.pdf
