@@ -81,10 +81,7 @@ class Model(nn.Module):
     """The overall architecture."""
 
     def __init__(self, etypes, ntypes, in_feats, num_nodes, args):
-        # gtn_channels=1, gtn_layers=1
-        #   hidden_feats=args.hidden_feats,
-        #             num_heads=args.num_heads,
-        #             dropout=args.dropout,
+
         super(Model, self).__init__()
         
         num_layers = args.num_layers

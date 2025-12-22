@@ -137,10 +137,8 @@ def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_id
     num_nodes = sum([g.num_nodes(nt) for nt in g.ntypes])
     model = Model(etypes=g.etypes, ntypes=g.ntypes,
                     in_feats=feature['drug'].shape[1],
-                    hidden_feats=args.hidden_feats,
-                    num_heads=args.num_heads,
-                    dropout=args.dropout,
                     num_nodes=num_nodes,
+                    args=args
                     )
     model.to(device)
     # Try to load matching checkpoint; fall back to non-strict load or skip if incompatible
