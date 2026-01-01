@@ -70,10 +70,16 @@ def train():
     try:
         per_df = pd.DataFrame(per_fold_metrics, columns=cols)
         per_df.index = range(1, len(per_df) + 1)  # fold numbering starts at 1
-        per_df.to_csv(os.path.join(args.saved_path, 'metrics_per_fold.csv'), index_label='fold')
+        # Print per-fold metrics and summary to console before saving
+        print('\nPer-fold metrics (rows = folds):')
+        print(per_df.to_string())
         summary = pd.DataFrame([per_df.mean(), per_df.std()], index=['mean', 'std'])
+        print('\nSummary (mean ± std):')
+        for c in cols:
+            print(f"{c}: {summary.loc['mean', c]:.4f} ± {summary.loc['std', c]:.4f}")
+        # human readable summary file
+        per_df.to_csv(os.path.join(args.saved_path, 'metrics_per_fold.csv'), index_label='fold')
         summary.to_csv(os.path.join(args.saved_path, 'metrics_summary.csv'))
-        # human readable summary
         with open(os.path.join(args.saved_path, 'metrics_summary.txt'), 'w') as f:
             f.write('Per-fold metrics:\n')
             f.write(per_df.to_string())
