@@ -158,5 +158,4 @@ def test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_id
     pred = pred.cpu().detach().numpy()
     pred_result[test_pos_idx[0], test_pos_idx[1]] = pred[test_pos_idx[0], test_pos_idx[1]]
     pred_result[test_neg_idx[0], test_neg_idx[1]] = pred[test_neg_idx[0], test_neg_idx[1]]   
-    print('Fold {} Test AUC {:.3f}; AUPR: {:.3f}'.format(fold, AUC, AUPR))
-    return label
+    return label , AUC , AUPR

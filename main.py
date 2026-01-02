@@ -18,7 +18,7 @@ def train():
     print(args)
     try:
         os.mkdir(args.saved_path)
-    except:
+    except Exception:
         pass
 
     # load DDA data for Kfold splitting
@@ -53,9 +53,14 @@ def train():
     dir = glob.glob(args.saved_path + '/*.pth')
     pred_result = np.zeros(df.shape)
     print('model testing')
+    AUPR_list = []
+    AUC_list = []
     for (train_pos_idx, test_pos_idx), (train_neg_idx, test_neg_idx) in zip(kf.split(data_pos),
                                                                             kf.split(data_neg)):
-        label = test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_idx  ,data_neg ,train_neg_idx ,test_neg_idx )
+        label ,AUC_fold , AUPR_fold = test_cv(args ,dir,df,fold,pred_result ,data_pos , train_pos_idx ,test_pos_idx  ,data_neg ,train_neg_idx ,test_neg_idx )
+        print('Fold {} Test AUC {:.3f}; AUPR: {:.3f}'.format(fold, AUC_fold, AUPR_fold))
+        AUC_list.append(AUC_fold)
+        AUPR_list.append(AUPR_fold)
         fold += 1
 
     #---------save the result-------------
@@ -66,6 +71,24 @@ def train():
     pd.DataFrame(pred_result).to_csv(os.path.join(args.saved_path, 'result.csv'), index=False, header=False)
     plot_result_auc(args, data[:, -1].flatten(), pred_result.flatten(), AUC)
     plot_result_aupr(args, data[:, -1].flatten(), pred_result.flatten(), aupr)
+
+    # --------- compute average and std across folds, print, and save -------------
+    auc_mean = np.mean(AUC_list) if len(AUC_list) > 0 else float('nan')
+    auc_std = np.std(AUC_list, ddof=0) if len(AUC_list) > 0 else float('nan')
+    aupr_mean = np.mean(AUPR_list) if len(AUPR_list) > 0 else float('nan')
+    aupr_std = np.std(AUPR_list, ddof=0) if len(AUPR_list) > 0 else float('nan')
+
+    print('AUC across folds:', AUC_list)
+    print('AUPR across folds:', AUPR_list)
+    print('AUC mean: {:.4f}; AUC std: {:.4f}'.format(auc_mean, auc_std))
+    print('AUPR mean: {:.4f}; AUPR std: {:.4f}'.format(aupr_mean, aupr_std))
+
+    # Save summary and per-fold metrics
+    summary_df = pd.DataFrame([['AUC', auc_mean, auc_std], ['AUPR', aupr_mean, aupr_std]],
+                              columns=['metric', 'mean', 'std'])
+    summary_df.to_csv(os.path.join(args.saved_path, 'metrics_summary.csv'), index=False)
+    per_fold_df = pd.DataFrame({'AUC': AUC_list, 'AUPR': AUPR_list})
+    per_fold_df.to_csv(os.path.join(args.saved_path, 'metrics_per_fold.csv'), index=False)
 
 
 if __name__ == '__main__':
