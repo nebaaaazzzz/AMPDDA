@@ -113,8 +113,8 @@ class Model(nn.Module):
         self.layer_attention_dis = SemanticAttention(hidden_feats)
         self.predict = InnerProductDecoder(hidden_feats)
         
-        self.att_drug = nn.Parameter(torch.zeros(3))
-        self.att_disease = nn.Parameter(torch.zeros(3))
+        self.att_drug = nn.Parameter(torch.zeros(2))
+        self.att_disease = nn.Parameter(torch.zeros(2))
 
         # optional in-model GTN to learn node embeddings from graph structure
         self.hidden_feats = hidden_feats
@@ -184,6 +184,7 @@ class Model(nn.Module):
             h[ntype] = x[ntype]
         h['drug'] = self.drug_linear(h['drug'])
         h['disease'] = self.disease_linear(h['disease'])
+        
         if 'protein' in self.ntypes:
             h['protein'] = self.protein_linear(h['protein'])
         if 'gene' in self.ntypes:
@@ -193,31 +194,31 @@ class Model(nn.Module):
 
         drug_emb_list, dis_emb_list = [], []
         
+        drug_emb_list.append(h['drug'])
+        dis_emb_list.append(h['disease'])
+        
         mdrug , mdis = self.gtn_embeddings(h , g)
         drug_emb_list.append(mdrug)
         dis_emb_list.append(mdis)
 
-        drug_emb_list.append(h['drug'])
-        dis_emb_list.append(h['disease'])
         
-        
-        org_h = h 
+        org_h = {k: v.clone() for k, v in h.items()}  # snapshot original per-type embeddings
         h = self.HeteroGCN_layer1(g, h, bn=True, dp=True)
-        h1 = h 
+        h1 = {k: v.clone() for k, v in h.items()}  # snapshot after first GCN
         h = self.HeteroGCN_layer2(g, h, bn=True, dp=True)
         w_d = torch.softmax(self.att_drug, dim=0)
         w_dis = torch.softmax(self.att_disease, dim=0)
 
         org_h['drug'] = (
-            w_d[0] * org_h['drug'] +
-            w_d[1] * h1['drug'] +
-            w_d[2] * h['drug']
+            org_h['drug'] +
+            w_d[0] * h1['drug'] +
+            w_d[1] * h['drug']
         )
 
         org_h['disease'] = (
-            w_dis[0] * org_h['disease'] +
-            w_dis[1] * h1['disease'] +
-            w_dis[2] * h['disease']
+            org_h['disease'] +
+            w_dis[0] * h1['disease'] +
+            w_dis[1] * h['disease']
         )
         
         drug_emb_list.append(org_h['drug'])
