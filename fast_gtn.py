@@ -192,7 +192,7 @@ class FastGTNs(nn.Module):
         parser.add_argument('--num_channels', type=int, default=1,
                         help='')
         parser.add_argument('--non_local', action='store_true', default=False,
-                            help='Enable non-local graph construction inside FastGTN')
+                            help='Enable non-local graph construction inside FastGTN')  
         parser.add_argument('--non_local_weight', type=float, default=0.0,
                             help='Initial weight to assign to non-local channel if enabled')
         parser.add_argument('--K', type=int, default=8,
